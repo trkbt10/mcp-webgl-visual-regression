@@ -1,0 +1,64 @@
+{
+  "name": "mcp-webgl-visual-regression",
+  "version": "1.0.0",
+  "description": "MCP server for WebGL regression testing with screenshot comparison",
+  "type": "module",
+  "private": true,
+  "main": "dist/server.js",
+  "bin": {
+    "webgl-visual-regression": "dist/cli/webgl-debugger.js",
+    "mcp-webgl-visual-regression": "bin/mcp-server",
+    "webgl-test-capture-canvas": "dist/tools/test-capture-canvas.js",
+    "webgl-test-capture-screenshots": "dist/tools/test-capture-screenshots.js",
+    "webgl-test-mcp-server": "dist/tools/test-mcp-server.js"
+  },
+  "scripts": {
+    "build": "vite build",
+    "build:tsc": "tsc",
+    "dev": "tsx watch src/server.ts",
+    "start": "node dist/server.js",
+    "start:mcp": "node bin/mcp-server",
+    "test": "vitest",
+    "test:bun": "bun test",
+    "typecheck": "tsc --noEmit",
+    "lint": "prettier --check .",
+    "format": "prettier --write .",
+    "cli": "tsx src/cli/webgl-debugger.ts",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.15.0",
+    "hono": "^4.8.4",
+    "puppeteer": "^24.12.0",
+    "sharp": "^0.34.2"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.6",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@types/bun": "latest",
+    "@types/node": "^24.0.12",
+    "bun-types": "^1.2.18",
+    "esbuild": "^0.25.6",
+    "prettier": "^3.6.2",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3",
+    "vite": "^7.0.3",
+    "vite-plugin-dts": "^4.5.4",
+    "vite-plugin-node": "^7.0.0",
+    "vitest": "^3.2.4"
+  },
+  "keywords": [
+    "mcp",
+    "webgl",
+    "regression-testing",
+    "visual-testing",
+    "screenshot-comparison",
+    "puppeteer"
+  ],
+  "author": "",
+  "license": "Unlicense",
+  "directories": {
+    "doc": "docs"
+  },
+  "types": "./dist/server.d.ts"
+}

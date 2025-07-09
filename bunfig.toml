@@ -1,0 +1,18 @@
+# Bun configuration file
+
+[install]
+# Use the platform's default browser
+browser = true
+
+[install.scopes]
+# Puppeteer specific configuration
+"@puppeteer" = { browser = "chromium" }
+
+[run]
+# Enable source maps for better debugging
+sourcemap = "external"
+
+[test]
+# Test configuration
+coverage = false
+coverageThreshold = 0.8
