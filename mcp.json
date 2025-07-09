@@ -1,0 +1,255 @@
+{
+  "name": "webgl-visual-regression",
+  "version": "1.0.0",
+  "description": "MCP server for WebGL regression testing with screenshot comparison",
+  "author": "",
+  "license": "Unlicense",
+  "runtime": "node",
+  "main": "dist/server.js",
+  "commands": {
+    "start": "node dist/server.js"
+  },
+  "tools": [
+    {
+      "name": "browser_launch",
+      "description": "Launch a new browser instance with WebGL support",
+      "parameters": {
+        "instanceId": {
+          "type": "string",
+          "required": true,
+          "description": "Unique identifier for the browser instance"
+        },
+        "url": {
+          "type": "string",
+          "description": "Initial URL to open"
+        },
+        "viewport": {
+          "type": "object",
+          "description": "Browser viewport dimensions",
+          "properties": {
+            "width": { "type": "number" },
+            "height": { "type": "number" }
+          }
+        },
+        "debugPort": {
+          "type": "number",
+          "description": "Remote debugging port"
+        },
+        "headless": {
+          "type": "boolean",
+          "description": "Run in headless mode"
+        }
+      }
+    },
+    {
+      "name": "browser_connect",
+      "description": "Connect to an existing browser instance via debug port",
+      "parameters": {
+        "instanceId": {
+          "type": "string",
+          "required": true,
+          "description": "Unique identifier for the browser instance"
+        },
+        "debugPort": {
+          "type": "number",
+          "required": true,
+          "description": "Debug port of the running browser"
+        }
+      }
+    },
+    {
+      "name": "browser_navigate",
+      "description": "Navigate to a URL in a browser instance",
+      "parameters": {
+        "instanceId": {
+          "type": "string",
+          "required": true,
+          "description": "Browser instance ID"
+        },
+        "url": {
+          "type": "string",
+          "required": true,
+          "description": "URL to navigate to"
+        }
+      }
+    },
+    {
+      "name": "browser_execute",
+      "description": "Execute JavaScript in a browser instance",
+      "parameters": {
+        "instanceId": {
+          "type": "string",
+          "required": true,
+          "description": "Browser instance ID"
+        },
+        "script": {
+          "type": "string",
+          "required": true,
+          "description": "JavaScript code to execute"
+        }
+      }
+    },
+    {
+      "name": "browser_close",
+      "description": "Close a browser instance",
+      "parameters": {
+        "instanceId": {
+          "type": "string",
+          "required": true,
+          "description": "Browser instance ID"
+        }
+      }
+    },
+    {
+      "name": "screenshot_capture",
+      "description": "Capture a screenshot of the current page",
+      "parameters": {
+        "instanceId": {
+          "type": "string",
+          "required": true,
+          "description": "Browser instance ID"
+        },
+        "testCase": {
+          "type": "string",
+          "description": "Test case name for the screenshot"
+        },
+        "format": {
+          "type": "string",
+          "enum": ["png", "jpeg"],
+          "description": "Image format"
+        },
+        "fullPage": {
+          "type": "boolean",
+          "description": "Capture full page"
+        },
+        "captureCanvas": {
+          "type": "boolean",
+          "description": "Capture only canvas elements"
+        },
+        "selector": {
+          "type": "string",
+          "description": "CSS selector for element to capture"
+        }
+      }
+    },
+    {
+      "name": "screenshot_compare",
+      "description": "Compare two screenshots for differences",
+      "parameters": {
+        "baseline": {
+          "type": "string",
+          "required": true,
+          "description": "Path to baseline screenshot"
+        },
+        "current": {
+          "type": "string",
+          "required": true,
+          "description": "Path to current screenshot"
+        },
+        "threshold": {
+          "type": "number",
+          "description": "Difference threshold percentage"
+        }
+      }
+    },
+    {
+      "name": "screenshot_list",
+      "description": "List all captured screenshots",
+      "parameters": {
+        "testCase": {
+          "type": "string",
+          "description": "Filter by test case name"
+        }
+      }
+    },
+    {
+      "name": "webgl_get_context_info",
+      "description": "Get WebGL context information from the current page",
+      "parameters": {
+        "instanceId": {
+          "type": "string",
+          "required": true,
+          "description": "Browser instance ID"
+        }
+      }
+    },
+    {
+      "name": "webgl_get_errors",
+      "description": "Get all tracked WebGL errors",
+      "parameters": {
+        "limit": {
+          "type": "number",
+          "description": "Maximum number of errors to return"
+        }
+      }
+    },
+    {
+      "name": "webgl_clear_errors",
+      "description": "Clear all tracked WebGL errors",
+      "parameters": {}
+    },
+    {
+      "name": "webgl_inject_debugging",
+      "description": "Inject WebGL error tracking into the page",
+      "parameters": {
+        "instanceId": {
+          "type": "string",
+          "required": true,
+          "description": "Browser instance ID"
+        },
+        "collectionDuration": {
+          "type": "number",
+          "description": "Error collection duration in seconds (default: 10)"
+        },
+        "maxErrors": {
+          "type": "number",
+          "description": "Maximum errors before stopping collection (default: 1000)"
+        }
+      }
+    },
+    {
+      "name": "webgl_get_shader_errors",
+      "description": "Get all tracked shader compilation and linking errors",
+      "parameters": {
+        "limit": {
+          "type": "number",
+          "description": "Maximum number of errors to return"
+        }
+      }
+    },
+    {
+      "name": "webgl_clear_shader_errors",
+      "description": "Clear all tracked shader errors",
+      "parameters": {}
+    },
+    {
+      "name": "webgl_get_error_summary",
+      "description": "Get a summary of all WebGL errors with aggregation",
+      "parameters": {
+        "includeShaderErrors": {
+          "type": "boolean",
+          "description": "Include shader compilation errors in the summary"
+        }
+      }
+    },
+    {
+      "name": "webgl_watch_shaders",
+      "description": "Watch shader files for changes and reload page on modification",
+      "parameters": {
+        "instanceId": {
+          "type": "string",
+          "required": true,
+          "description": "Browser instance ID"
+        },
+        "files": {
+          "type": "array",
+          "description": "Array of shader file paths to watch"
+        },
+        "directories": {
+          "type": "array",
+          "description": "Array of directories to watch for shader files"
+        }
+      }
+    }
+  ]
+}
