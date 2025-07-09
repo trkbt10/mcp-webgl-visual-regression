@@ -1,0 +1,46 @@
+#!/usr/bin/env node
+
+/**
+ * MCP Server startup script
+ * Runs the compiled JavaScript server
+ */
+
+import { spawn } from 'child_process';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const serverPath = join(__dirname, '..', 'dist', 'server.js');
+
+// Start the server with stdio transport
+const server = spawn('node', [serverPath], {
+  stdio: ['pipe', 'pipe', 'pipe'],
+  env: {
+    ...process.env,
+    MCP_TRANSPORT: 'stdio'
+  }
+});
+
+// Forward stdin to server
+process.stdin.pipe(server.stdin);
+
+// Forward server stdout to process stdout
+server.stdout.pipe(process.stdout);
+
+// Forward server stderr to process stderr
+server.stderr.pipe(process.stderr);
+
+// Handle server exit
+server.on('exit', (code) => {
+  process.exit(code || 0);
+});
+
+// Handle process termination
+process.on('SIGINT', () => {
+  server.kill('SIGINT');
+});
+
+process.on('SIGTERM', () => {
+  server.kill('SIGTERM');
+});
