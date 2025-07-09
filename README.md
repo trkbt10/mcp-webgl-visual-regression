@@ -24,7 +24,7 @@ This tool provides WebGL regression testing capabilities via the Model Context P
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/mcp-webgl-visual-regression.git
+git clone https://github.com/trkbt10/mcp-webgl-visual-regression.git
 cd mcp-webgl-visual-regression
 
 # Install dependencies
