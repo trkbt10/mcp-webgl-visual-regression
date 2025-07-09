@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebGL Shader Error Test</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        canvas {
+            border: 1px solid #ccc;
+            margin: 20px 0;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #log {
+            width: 800px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <h1>WebGL Shader Error Test</h1>
+    <div class="controls">
+        <button onclick="testBrokenVertexShader()">Test Broken Vertex Shader</button>
+        <button onclick="testBrokenFragmentShader()">Test Broken Fragment Shader</button>
+        <button onclick="testProgramLinkError()">Test Program Link Error</button>
+        <button onclick="testWorkingShader()">Test Working Shader</button>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+    <canvas id="glCanvas" width="800" height="600"></canvas>
+    <div id="log"></div>
+
+    <script>
+        const canvas = document.getElementById('glCanvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        const log = document.getElementById('log');
+
+        function addLog(message, isError = false) {
+            const timestamp = new Date().toLocaleTimeString();
+            const className = isError ? 'error' : 'success';
+            log.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function clearLog() {
+            log.innerHTML = '';
+        }
+
+        if (!gl) {
+            addLog('WebGL not supported!', true);
+        } else {
+            addLog('WebGL context created successfully');
+            
+            // Store context globally for debugging
+            window.__webglContext = gl;
+        }
+
+        function createShader(gl, type, source) {
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+            
+            const success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+            if (success) {
+                return shader;
+            }
+            
+            const error = gl.getShaderInfoLog(shader);
+            gl.deleteShader(shader);
+            throw new Error(error);
+        }
+
+        function createProgram(gl, vertexShader, fragmentShader) {
+            const program = gl.createProgram();
+            gl.attachShader(program, vertexShader);
+            gl.attachShader(program, fragmentShader);
+            gl.linkProgram(program);
+            
+            const success = gl.getProgramParameter(program, gl.LINK_STATUS);
+            if (success) {
+                return program;
+            }
+            
+            const error = gl.getProgramInfoLog(program);
+            gl.deleteProgram(program);
+            throw new Error(error);
+        }
+
+        function testBrokenVertexShader() {
+            addLog('Testing broken vertex shader...');
+            
+            const vertexShaderSource = `
+                attribute vec3 aPosition;
+                uniform mat4 uModelViewMatrix;
+                uniform mat4 uProjectionMatrix;
+
+                void main() {
+                    // Intentional syntax error: missing semicolon
+                    vec4 position = vec4(aPosition, 1.0)
+                    gl_Position = uProjectionMatrix * uModelViewMatrix * position;
+                }
+            `;
+            
+            const fragmentShaderSource = `
+                precision mediump float;
+                void main() {
+                    gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+                }
+            `;
+            
+            try {
+                const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+                const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+                const program = createProgram(gl, vertexShader, fragmentShader);
+                addLog('Shader compiled successfully (unexpected!)', true);
+            } catch (error) {
+                addLog('Shader compilation error: ' + error.message, true);
+            }
+        }
+
+        function testBrokenFragmentShader() {
+            addLog('Testing broken fragment shader...');
+            
+            const vertexShaderSource = `
+                attribute vec3 aPosition;
+                void main() {
+                    gl_Position = vec4(aPosition, 1.0);
+                }
+            `;
+            
+            const fragmentShaderSource = `
+                precision mediump float;
+                uniform vec3 uColor;
+                uniform sampler2D uTexture;
+
+                void main() {
+                    // Error: textureCoord is not defined
+                    vec4 color = texture2D(uTexture, textureCoord);
+                    gl_FragColor = vec4(uColor, 1.0) * color;
+                }
+            `;
+            
+            try {
+                const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+                const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+                const program = createProgram(gl, vertexShader, fragmentShader);
+                addLog('Shader compiled successfully (unexpected!)', true);
+            } catch (error) {
+                addLog('Shader compilation error: ' + error.message, true);
+            }
+        }
+
+        function testProgramLinkError() {
+            addLog('Testing program link error...');
+            
+            // Vertex shader outputs a varying
+            const vertexShaderSource = `
+                attribute vec3 aPosition;
+                varying vec3 vColor;
+                void main() {
+                    vColor = vec3(1.0, 0.0, 0.0);
+                    gl_Position = vec4(aPosition, 1.0);
+                }
+            `;
+            
+            // Fragment shader expects a different varying
+            const fragmentShaderSource = `
+                precision mediump float;
+                varying vec3 vPosition; // Mismatch: expecting vPosition instead of vColor
+                void main() {
+                    gl_FragColor = vec4(vPosition, 1.0);
+                }
+            `;
+            
+            try {
+                const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+                const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+                const program = createProgram(gl, vertexShader, fragmentShader);
+                addLog('Program linked successfully (might be a warning only)');
+            } catch (error) {
+                addLog('Program link error: ' + error.message, true);
+            }
+        }
+
+        function testWorkingShader() {
+            addLog('Testing working shader...');
+            
+            const vertexShaderSource = `
+                attribute vec3 aPosition;
+                void main() {
+                    gl_Position = vec4(aPosition, 1.0);
+                }
+            `;
+            
+            const fragmentShaderSource = `
+                precision mediump float;
+                void main() {
+                    gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
+                }
+            `;
+            
+            try {
+                const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+                const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+                const program = createProgram(gl, vertexShader, fragmentShader);
+                
+                // Draw a simple triangle
+                const positions = new Float32Array([
+                    -0.5, -0.5, 0.0,
+                     0.5, -0.5, 0.0,
+                     0.0,  0.5, 0.0
+                ]);
+                
+                const positionBuffer = gl.createBuffer();
+                gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+                gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+                
+                const positionLocation = gl.getAttribLocation(program, 'aPosition');
+                
+                gl.clearColor(0.0, 0.0, 0.0, 1.0);
+                gl.clear(gl.COLOR_BUFFER_BIT);
+                
+                gl.useProgram(program);
+                gl.enableVertexAttribArray(positionLocation);
+                gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+                gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 0, 0);
+                
+                gl.drawArrays(gl.TRIANGLES, 0, 3);
+                
+                addLog('Shader compiled and rendered successfully!');
+            } catch (error) {
+                addLog('Error: ' + error.message, true);
+            }
+        }
+
+        // Auto-test all shaders on load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                addLog('Starting automatic shader tests...');
+                testBrokenVertexShader();
+                setTimeout(() => testBrokenFragmentShader(), 1000);
+                setTimeout(() => testProgramLinkError(), 2000);
+                setTimeout(() => testWorkingShader(), 3000);
+            }, 500);
+        });
+    </script>
+</body>
+</html>
