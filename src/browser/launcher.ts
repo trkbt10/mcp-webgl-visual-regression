@@ -1,4 +1,5 @@
 import puppeteer from "puppeteer";
+import { platform } from "node:os";
 import type { BrowserInstance, BrowserLaunchOptions } from "./types.js";
 
 export const launchBrowser = async (
@@ -12,14 +13,32 @@ export const launchBrowser = async (
     headless = "new",
   } = options;
 
+  // Determine ANGLE backend based on OS
+  const getAngleBackend = () => {
+    const os = platform();
+    switch (os) {
+      case "darwin": // macOS
+        return "metal";
+      case "win32": // Windows
+        return "d3d11";
+      case "linux": // Linux
+        return "vulkan";
+      default:
+        return "gl"; // Fallback to OpenGL
+    }
+  };
+
+  const angleBackend = getAngleBackend();
+  console.log(`Using ANGLE backend: ${angleBackend} for ${platform()}`);
+
   const args = [
-    "--enable-gpu", // ★GPU プロセスを強制起動
-    "--use-angle=metal", // ★Metal-ANGLE を明示（Intel Mac なら gl でも可）
-    "--disable-software-rasterizer", // SwiftShader を完全に無効化（保険）
-    "--ignore-gpu-blocklist", // 万一ブロックリスト判定された場合に備え
-    "--in-process-gpu", // RDP/仮想ディスプレイで GPU プロセスが落ちるなら
-    "--headless=new", // 冗長でも flag で再確認しやすい
-    "--no-sandbox", // root 権限の CI で必要なら
+    "--enable-gpu", // Force GPU process to start
+    `--use-angle=${angleBackend}`, // Use OS-specific ANGLE backend
+    "--disable-software-rasterizer", // Disable SwiftShader software rendering
+    "--ignore-gpu-blocklist", // Bypass GPU blocklist restrictions
+    "--in-process-gpu", // Keep GPU process in-process for remote/virtual environments
+    "--headless=new", // Use new headless mode
+    "--no-sandbox", // Required for root-privileged CI environments
   ];
 
   if (webglOptions.ignoreGpuBlocklist) {
@@ -35,7 +54,7 @@ export const launchBrowser = async (
     args,
     defaultViewport: null,
   };
-  
+
   const browser = await puppeteer.launch(launchOptions);
 
   const page = await browser.newPage();

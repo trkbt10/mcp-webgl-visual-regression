@@ -1,6 +1,6 @@
 {
   "name": "mcp-webgl-visual-regression",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "MCP server for WebGL regression testing with screenshot comparison",
   "type": "module",
   "private": true,
